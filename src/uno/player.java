@@ -1,4 +1,4 @@
-package unoGameProject;
+package uno;
 
 // Import Java modules
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ public class Player extends Person {
     // Constructor
     public Player(String name) {
         super(name);
-        playerCards = new ArrayList<AccessibleBufferedImage>();
+        this.playerCards = new ArrayList<AccessibleBufferedImage>();
         Cursor c = Cursor.getDefaultCursor();
         c.
     }

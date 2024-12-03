@@ -1,4 +1,4 @@
-package game.uno;
+package uno;
 
 /**
  * AccessibleBufferedImage is a subclass of java.awt.image.BufferedImage that implements javax.accessibility.AccessibleComponent

@@ -1,4 +1,4 @@
-package unoGameProject;
+package uno;
 
 public enum NumberOrAction {
 	

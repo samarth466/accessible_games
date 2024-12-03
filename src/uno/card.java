@@ -1,14 +1,21 @@
-package unoGameProject;
+package uno;
 
+import java.awt.Cursor;
 // Import Java modules
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.io.IOException;
+import java.awt.Graphics;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.InputStream;
+import java.io.IOException;
+import java.nio.file.Paths;
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
 
 // Class header
-public class Card implements Comparable {
+public class Card extends JPanel implements Comparable {
     
     // Initialize instance variables
     private Color color;
@@ -17,23 +24,64 @@ public class Card implements Comparable {
     
     // Constructor
     public Card(Color c, NumberOrAction v) {
-        color = c;
-        cardValue = v;
-        assignCardType();
+        this.color = c;
+        this.cardValue = v;
+        this.assignCardType();
     }
     
     // Constructor
     public Card(Color c, NumberOrAction v, CardType t) {
-        color = c;
-        cardValue = v;
-        cardType = t;
+        this.color = c;
+        this.cardValue = v;
+        this.cardType = t;
     }
     
     // Constructor
     public Card(Card card) {
-        color = card.getColor();
-        cardValue = card.getCardValue();
-        cardType = card.getCardType();
+        this.color = card.getColor();
+        this.cardValue = card.getCardValue();
+        this.cardType = card.getCardType();
+    }
+
+    // Paints the component
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.drawImage(loadImage().getImage(), 0, 0, this.getWidth(), this.getHeight(), this);
+    }
+
+    // Adds mouse listener to select this Card object
+    private void listenForSelection() {
+        // Handle mouse interactions
+        this.addMouseListener(new MouseAdapter() {
+            
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                Card.this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                Card.this.setCursor(Cursor.getDefaultCursor());
+            }
+
+        });
+
+        // Handle keyboard interactions
+        this.addKeyListener(new KeyAdapter() {
+            
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    if (Card.this.getCursor() == Cursor.getDefaultCursor()) {
+                        Card.this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    } else {
+                        Card.this.setCursor(Cursor.getDefaultCursor());
+                    }
+                }
+            }
+
+        });
     }
     
     // Getter methods
@@ -100,11 +148,11 @@ public class Card implements Comparable {
         return(Paths.get(basePath,filename).toString());
     }
 
-    public AccessibleBufferedImage loadImage() {
-        AccessibleBufferedImage image = null;
+    private ImageIcon loadImage() {
+        ImageIcon image = null;
         try (InputStream is = Card.class.getClassLoader().getResourceAsStream(parseImagePath("images"))) {
             if (is != null) {
-                image = ImageIO.read(is);
+                image = new ImageIcon(ImageIO.read(is));
                 return(image);
             } else {
                 return(null);
@@ -114,17 +162,21 @@ public class Card implements Comparable {
         }
     }
 
-    public int compareTo(Card other) {
-        if (color == other.getColor() && color != Color.UNDEFINED) {
-            return(other.getScore()-getScore());
-        } else if (color == Color.UNDEFINED && other.getColor() != Color.UNDEFINED) {
+    @Override
+    public int compareTo(Object other) {
+        Card otherCard = (Card) other;
+        if (color == otherCard.getColor() && color != Color.UNDEFINED) {
+            return(otherCard.getScore()-getScore());
+        } else if (color == Color.UNDEFINED && otherCard.getColor() != Color.UNDEFINED) {
             return(-1);
-        } else if (other.getColor() == Color.UNDEFINED && color != Color.UNDEFINED) {
+        } else if (otherCard.getColor() == Color.UNDEFINED && color != Color.UNDEFINED) {
             return(1);
-        } else if (color == other.color && color == Color.UNDEFINED) {
-            return(other.getScore()-getScore());
-        } else if (color != other.getColor()) {
-            return(color.colorName().compareTo(other.getColor().colorName()));
+        } else if (color == otherCard.color && color == Color.UNDEFINED) {
+            return(otherCard.getScore()-getScore());
+        } else if (color != otherCard.getColor()) {
+            return(color.colorName().compareTo(otherCard.getColor().colorName()));
+        } else {
+            return(0);
         }
     }
     

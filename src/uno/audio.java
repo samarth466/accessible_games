@@ -1,4 +1,4 @@
-package game.uno;
+package uno;
 
 // Import java modules
 

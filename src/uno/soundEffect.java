@@ -1,4 +1,4 @@
-package unoGameProject;
+package uno;
 
 import unoGameProject.Audio;
 

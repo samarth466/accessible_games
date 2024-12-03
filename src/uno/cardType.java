@@ -1,4 +1,4 @@
-package unoGameProject;
+package uno;
 
 // Import Java modules
 import java.util.ArrayList;

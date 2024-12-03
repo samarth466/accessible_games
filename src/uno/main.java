@@ -1,4 +1,4 @@
-package game.uno;
+package uno;
 
 // Import Java modules
 import java.util.Scanner;

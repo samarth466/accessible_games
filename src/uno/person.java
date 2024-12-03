@@ -1,4 +1,4 @@
-package unoGameProject;
+package uno;
 
 // Class header
 public abstract class Person {
