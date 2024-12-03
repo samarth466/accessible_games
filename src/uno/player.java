@@ -3,8 +3,11 @@ package uno;
 // Import Java modules
 import java.util.ArrayList;
 import java.util.Scanner;
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
 import java.awt.Image;
 import java.awt.Cursor;
+import java.awt.Graphics;
 
 // Class header
 public class Player extends Person {
@@ -13,34 +16,50 @@ public class Player extends Person {
     private static final int CARD_HEIGHT = 145;
     private int initialCardX = 10;
     private int initialCardY = 400;
-    private ArrayList<AccessibleBufferedImage> playerCards;
+    private ArrayList<ImageIcon> playerCards;
     
     // Constructor
     public Player(String name) {
         super(name);
-        this.playerCards = new ArrayList<AccessibleBufferedImage>();
-        Cursor c = Cursor.getDefaultCursor();
-        c.
+        this.playerCards = new ArrayList<>();
     }
     
     public String printHand(Game game) {
         for (int i = 0; i < super.getHand().getNumberOfCards(); i++) {
             Card card = super.getHand().getCard(i);
             if (!playerCards.contains(card)) {
-                playerCards.add(new AccessibleBufferedImage()card.loadImage().getImage().getScaledInstance(CARD_WIDTH, CARD_HEIGHT, Image.SCALE_SMOOTH));
+                playerCards.add(new ImageIcon(card.getImage().getImage().getScaledInstance(this.CARD_WIDTH, this.CARD_HEIGHT, Image.SCALE_SMOOTH)));
             }
-            AccessibleBufferedImage image = playerCards.get(i);
-            image.setBounds(initialCardX,initialCardY,CARD_WIDTH,CARD_HEIGHT);
-            game.add(image);
+            ImageIcon image = playerCards.get(i);
+            JPanel innerPanel = new JPanel() {
+
+                @Override
+                public void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.drawImage(image.getImage(), 0, 0, this.getWidth(), this.getHeight(), this);
+                }
+
+            };
+            innerPanel.setBounds(this.initialCardX, this.initialCardY, this.CARD_WIDTH, this.CARD_HEIGHT);
+            game.add(innerPanel);
             initialCardX += 50;
             initialCardY -= 18;
         }
     }
     
     private void printTopCard(Card topCard, Color currentColor, Game game) {
-        AccessibleBufferedImage image = new AccessibleBufferedImage(topCard.loadImage().getImage().getScaledInstance(CARD_WIDTH, CARD_HEIGHT, Image.SCALE_SMOOTH));
-        image.setBounds(150,150,CARD_WIDTH,CARD_HEIGHT);
-        game.add(image);
+        ImageIcon image = new ImageIcon(topCard.getImage().getImage().getScaledInstance(CARD_WIDTH, CARD_HEIGHT, Image.SCALE_SMOOTH));
+        JPanel innerPanel = new JPanel() {
+
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(image.getImage(), 0, 0, this.getWidth(), this.getHeight(), this);
+            }
+
+        };
+        innerPanel.setBounds(150, 150, this.CARD_WIDTH, this.CARD_HEIGHT);
+        game.add(innerPanel);
         if (topCard.getColor() == Color.UNDEFINED) {
             System.out.println("The wild color is " + currentColor);
         }
@@ -51,6 +70,7 @@ public class Player extends Person {
     public Color chooseCard(Card topCard, Deck deck, Deck discardPile, Color currentColor, boolean light, Game game) {
         int cardIndex = -1;
         boolean getNum = true;
+        Scanner input = new Scanner(System.in);
         printTopCard(topCard,currentColor,game);
         while (getNum) {
             try {
@@ -87,7 +107,7 @@ public class Player extends Person {
                         }
                     }
                 } else if (cardIndex == 0) {
-                    printTopCard(topCard,currentColor);
+                    printTopCard(topCard,currentColor, game);
                 } else if (cardIndex <= super.getHand().getNumberOfCards() && cardIndex > 0) {
                     Card cardToPlay = super.getHand().getHand().get(cardIndex);
                     if (cardIsPlayable(topCard,currentColor,cardToPlay)) {

@@ -15,18 +15,21 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
 // Class header
-public class Card extends JPanel implements Comparable {
+public class Card extends JPanel implements Comparable<Card> {
     
     // Initialize instance variables
     private Color color;
     private NumberOrAction cardValue;
     private CardType cardType;
+    private ImageIcon image;
     
     // Constructor
     public Card(Color c, NumberOrAction v) {
         this.color = c;
         this.cardValue = v;
+        this.image = loadImage();
         this.assignCardType();
+        this.listenForSelection();
     }
     
     // Constructor
@@ -34,6 +37,8 @@ public class Card extends JPanel implements Comparable {
         this.color = c;
         this.cardValue = v;
         this.cardType = t;
+        this.image = loadImage();
+        this.listenForSelection();
     }
     
     // Constructor
@@ -41,13 +46,15 @@ public class Card extends JPanel implements Comparable {
         this.color = card.getColor();
         this.cardValue = card.getCardValue();
         this.cardType = card.getCardType();
+        this.image = loadImage();
+        this.listenForSelection();
     }
 
     // Paints the component
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.drawImage(loadImage().getImage(), 0, 0, this.getWidth(), this.getHeight(), this);
+        g.drawImage(this.image.getImage(), 0, 0, this.getWidth(), this.getHeight(), this);
     }
 
     // Adds mouse listener to select this Card object
@@ -104,6 +111,11 @@ public class Card extends JPanel implements Comparable {
     // Gets the type of the card
     public CardType getCardType() {
         return(cardType);
+    }
+
+    // Returns the image of the card
+    public ImageIcon getImage() {
+        return(this.image);
     }
     
     // Sets the card's type based on its color
@@ -163,18 +175,17 @@ public class Card extends JPanel implements Comparable {
     }
 
     @Override
-    public int compareTo(Object other) {
-        Card otherCard = (Card) other;
-        if (color == otherCard.getColor() && color != Color.UNDEFINED) {
-            return(otherCard.getScore()-getScore());
-        } else if (color == Color.UNDEFINED && otherCard.getColor() != Color.UNDEFINED) {
+    public int compareTo(Card other) {
+        if (this.color == other.getColor() && this.color != Color.UNDEFINED) {
+            return(other.getScore()-this.getScore());
+        } else if (this.color == Color.UNDEFINED && other.getColor() != Color.UNDEFINED) {
             return(-1);
-        } else if (otherCard.getColor() == Color.UNDEFINED && color != Color.UNDEFINED) {
+        } else if (other.getColor() == Color.UNDEFINED && this.color != Color.UNDEFINED) {
             return(1);
-        } else if (color == otherCard.color && color == Color.UNDEFINED) {
-            return(otherCard.getScore()-getScore());
-        } else if (color != otherCard.getColor()) {
-            return(color.colorName().compareTo(otherCard.getColor().colorName()));
+        } else if (this.color == other.getColor() && this.color == Color.UNDEFINED) {
+            return(other.getScore()-this.getScore());
+        } else if (this.color != other.getColor()) {
+            return(this.color.colorName().compareTo(other.getColor().colorName()));
         } else {
             return(0);
         }

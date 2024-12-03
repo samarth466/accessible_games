@@ -69,6 +69,11 @@ public class Hand {
     public int getNumberOfCards() {
         return(hand.size());
     }
+
+    // Returns a Card given an index
+    public Card getCard(int index) {
+        return(this.hand.get(index));
+    }
     
     // Returns a String representation of a Card
     public String toString() {
