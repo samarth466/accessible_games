@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
 import java.awt.Image;
 import java.awt.Cursor;
 import java.awt.Graphics;
@@ -17,14 +20,28 @@ public class Player extends Person {
     private int initialCardX = 10;
     private int initialCardY = 400;
     private ArrayList<ImageIcon> playerCards;
+    private JTextArea output;
+    private JTextField input;
     
     // Constructor
     public Player(String name) {
         super(name);
         this.playerCards = new ArrayList<>();
+        this.input = new JTextField();
+        this.output = new JTextArea();
+    }
+
+    private void displayText(String text) {
+        output.setText(text);
+    }
+
+    private String getText() {
+        String text = input.getText();
+        input.setText("");
+        return(text);
     }
     
-    public String printHand(Game game) {
+    public void printHand(Game game) {
         for (int i = 0; i < super.getHand().getNumberOfCards(); i++) {
             Card card = super.getHand().getCard(i);
             if (!playerCards.contains(card)) {
@@ -61,7 +78,7 @@ public class Player extends Person {
         innerPanel.setBounds(150, 150, this.CARD_WIDTH, this.CARD_HEIGHT);
         game.add(innerPanel);
         if (topCard.getColor() == Color.UNDEFINED) {
-            System.out.println("The wild color is " + currentColor);
+            this.displayText("The wild color is " + currentColor);
         }
     }
     
@@ -70,38 +87,32 @@ public class Player extends Person {
     public Color chooseCard(Card topCard, Deck deck, Deck discardPile, Color currentColor, boolean light, Game game) {
         int cardIndex = -1;
         boolean getNum = true;
-        Scanner input = new Scanner(System.in);
         printTopCard(topCard,currentColor,game);
         while (getNum) {
             try {
-                input.nextLine();
                 if (cardIndex == -1) {
                     ArrayList<Card> temp = super.getHand().getHand();
                     super.getHand().takeCardFromDeck(deck);
                     for (Card card: super.getHand().getHand()) {
                         if (!temp.contains(card)) {
-                            System.out.println("You drew: " + card);
+                            this.displayText("You drew: " + card);
                             if (cardIsPlayable(topCard,currentColor, card)) {
-                                System.out.println("Press 1 if you'd like to play this card, 0 otherwise");
-                                int userChoice = input.nextInt();
-                                input.nextLine();
+                                this.displayText("Press 1 if you'd like to play this card, 0 otherwise");
+                                int userChoice = Integer.parseInt(this.getText());
                                 if (userChoice == 1) {
                                     super.getHand().removeCard(card);
                                     discardPile.add(card);
                                     super.getHand().removeCard(card);
                                     if (card.getColor() == Color.UNDEFINED) {
-                                        input.close();
                                         return(chooseColor(light));
                                     } else {
-                                        input.close();
                                         return(card.getColor());
                                     }
                                 } else {
-                                    System.out.println("Your turn is over. You have " + super.getHand().getNumberOfCards() + " cards.");
+                                    this.displayText("Your turn is over. You have " + super.getHand().getNumberOfCards() + " cards.");
                                 }
                             } else {
-                                System.out.println("You cannot play this card. Your turn is over. You have " + super.getHand().getNumberOfCards() + " cards.");
-                                input.close();
+                                this.displayText("You cannot play this card. Your turn is over. You have " + super.getHand().getNumberOfCards() + " cards.");
                                 return(Color.UNDEFINED);
                             }
                         }
@@ -114,18 +125,15 @@ public class Player extends Person {
                         discardPile.add(cardToPlay);
                         super.getHand().removeCard(cardToPlay);
                         if (cardToPlay.getColor() == Color.UNDEFINED) {
-                            input.close();
                             return(chooseColor(light));
                         } else {
-                            input.close();
                             return(cardToPlay.getColor());
                         }
                     }
                 }
             } catch (Exception e) {
                 //System.out.println(e);
-                System.out.println("Invalid!");
-                input.nextLine();
+                this.displayText("Invalid!");
             }
         }
         return(Color.UNDEFINED);
@@ -146,7 +154,6 @@ public class Player extends Person {
     }
     
     public Color chooseColor(boolean light) {
-        Scanner input = new Scanner(System.in);
         Color color;
         String output = "Press ";
         if (light) {
@@ -158,13 +165,12 @@ public class Player extends Person {
             for (int i=0; i<CardType.DARK.colors().size()-1; i++) {
                 output += i+1 + " for " + CardType.DARK.colors().get(i) + ", ";
             }
-            output += CardType.DARK.colors().size() + " for " + CardType.DARK.colors().get(CardType.LIGHT.colors().size()-1) + ".";
+            output += CardType.DARK.colors().size() + " for " + CardType.DARK.colors().get(CardType.DARK.colors().size()-1) + ".";
         }
         while(true) {
             try {
-                System.out.println(output);
-                int colorIndex = input.nextInt();
-                input.nextLine();
+                this.displayText(output);
+                int colorIndex = Integer.parseInt(this.getText());
                 if (light) {
                     color = CardType.LIGHT.colors().get(colorIndex-1);
                     break;
@@ -173,10 +179,9 @@ public class Player extends Person {
                     break;
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("Invalid input. Try again.");
+                this.displayText("Invalid input. Try again.");
             }
         }
-        input.close();
         return(color);
     }
     
