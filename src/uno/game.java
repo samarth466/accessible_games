@@ -23,8 +23,8 @@ public class Game extends JPanel {
         playerName = pN;
         thresholdScore = tS;
         scores = new ArrayList<Integer>(numPlayers);
-        //setInitialGameState();
-        //System.out.println("Game created with " + numPlayers + " players.");
+        setInitialGameState();
+        System.out.println("Game created with " + numPlayers + " players.");
         //startGame();
     }
 
@@ -42,7 +42,7 @@ public class Game extends JPanel {
         ArrayList<ComputerName> computerNames = new ArrayList<ComputerName>();
         ArrayList<Computer> computers = new ArrayList<Computer>();
         for (int i=0; i<numPlayers-1; i++) {
-            int randomIndex = (int)(Math.random()*(ComputerName.values().length-1));
+        int randomIndex = (int)(Math.random()*(ComputerName.values().length-1));
             if (!computerNames.contains(ComputerName.values()[randomIndex])) {
                 computerNames.add(ComputerName.values()[randomIndex]);
                 computers.add(new Computer(ComputerName.values()[randomIndex].computerName()));
@@ -53,7 +53,7 @@ public class Game extends JPanel {
     }
     
     // Handles the logic for a single game
-    private void startGame() {
+    public void startGame() {
         while (true) {
             Person winningPlayer = startRound();
             int totalScore = 0;
@@ -106,7 +106,7 @@ public class Game extends JPanel {
                 playerIndex = 0;
             }
             Person person = allPlayers.get(playerIndex);
-            Card currentCard = discardPile.getCards().get(discardPile.size()-1);
+            Card currentCard = discardPile.getTopCard();
             if (!checkedCard) {
                 playerIndex = checkCard(currentCard,playerIndex, person, currentColor,light,allPlayers);
                 light = isPlayingLightSide();
@@ -114,7 +114,11 @@ public class Game extends JPanel {
                 continue;
             }
             currentColor = person.chooseCard(currentCard, deck, discardPile, currentColor, light, this);
-            if (discardPile.getCards().get(discardPile.size()-1) != currentCard) {
+            if (person instanceof Player) {
+                ((Player) person).printHand(this);
+            }
+            currentColor = person.chooseCard(currentCard, deck, discardPile, currentColor, light, this);
+            if (currentCard != currentCard) {
                 System.out.println(person + " played " + discardPile.getCards().get(discardPile.size()-1));
                 if (discardPile.getCards().get(discardPile.size()-1).getCardValue() == NumberOrAction.WILD || discardPile.getCards().get(discardPile.size()-1).getCardValue() == NumberOrAction.WILD_DRAW_TWO || discardPile.getCards().get(discardPile.size()-1).getCardValue() == NumberOrAction.WILD_DRAW_COLOR.WILD_DRAW_COLOR) {
                     System.out.println("The wild color is " + currentColor);

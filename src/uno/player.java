@@ -42,6 +42,7 @@ public class Player extends Person {
     }
     
     public void printHand(Game game) {
+        System.out.println("Printing hand...");
         for (int i = 0; i < super.getHand().getNumberOfCards(); i++) {
             Card card = super.getHand().getCard(i);
             if (!playerCards.contains(card)) {
