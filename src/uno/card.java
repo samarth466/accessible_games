@@ -3,6 +3,7 @@ package uno;
 import java.awt.Cursor;
 // Import Java modules
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -27,7 +28,7 @@ public class Card extends JPanel implements Comparable<Card> {
     public Card(Color c, NumberOrAction v) {
         this.color = c;
         this.cardValue = v;
-        this.image = loadImage();
+        this.image = new ImageIcon(this.loadImage().getImage().getScaledInstance(100, 400, Image.SCALE_SMOOTH));
         this.assignCardType();
         this.listenForSelection();
     }
@@ -37,7 +38,7 @@ public class Card extends JPanel implements Comparable<Card> {
         this.color = c;
         this.cardValue = v;
         this.cardType = t;
-        this.image = loadImage();
+        this.image = new ImageIcon(this.loadImage().getImage().getScaledInstance(100, 400, Image.SCALE_SMOOTH));
         this.listenForSelection();
     }
     
@@ -46,7 +47,7 @@ public class Card extends JPanel implements Comparable<Card> {
         this.color = card.getColor();
         this.cardValue = card.getCardValue();
         this.cardType = card.getCardType();
-        this.image = loadImage();
+        this.image = new ImageIcon(this.loadImage().getImage().getScaledInstance(100, 400, Image.SCALE_SMOOTH));
         this.listenForSelection();
     }
 
@@ -146,7 +147,8 @@ public class Card extends JPanel implements Comparable<Card> {
             if (cardValue.score()<10) {
                 filename = String.format("%s_%d.png", color.colorName().substring(0,2),cardValue.score());
             } else {
-                filename = String.format("%s_%s.png", color.colorName().substring(0,2), cardValue.cardName().contains(" ")?cardValue.cardName().split(" ")[0].charAt(0)+cardValue.cardName().split(" ")[1].charAt(0):cardValue.cardName().substring(0,2));
+                filename = String.format("%s_%s.png", color.colorName().substring(0,2), cardValue.cardName().contains(" ")?"" + cardValue.cardName().split(" ")[0].charAt(0)+"_"+cardValue.cardName().split(" ")[1].charAt(0):cardValue.cardName().substring(0,2));
+                
             }
         } else {
             if (cardValue == NumberOrAction.WILD) {
@@ -154,7 +156,7 @@ public class Card extends JPanel implements Comparable<Card> {
             } else if (cardValue == NumberOrAction.WILD_DRAW_COLOR) {
                 filename = "W_D_C.png";
             } else if (cardValue == NumberOrAction.WILD_DRAW_TWO) {
-                filename = "W_D_2";
+                filename = "W_D_2.png";
             }
         }
         return(Paths.get(basePath,filename).toString());
@@ -162,11 +164,12 @@ public class Card extends JPanel implements Comparable<Card> {
 
     private ImageIcon loadImage() {
         ImageIcon image = null;
-        try (InputStream is = Card.class.getClassLoader().getResourceAsStream(parseImagePath("images"))) {
+        try (InputStream is = Card.class.getResourceAsStream("../" + parseImagePath("images"))) {
             if (is != null) {
                 image = new ImageIcon(ImageIO.read(is));
                 return(image);
             } else {
+                System.out.println("Failed to load");
                 return(null);
             }
         } catch (IOException e) {

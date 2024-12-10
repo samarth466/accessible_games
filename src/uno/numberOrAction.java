@@ -14,10 +14,10 @@ public enum NumberOrAction {
 	REVERSE("Reverse",20),
 	SKIP("Skip",20),
 	SKIP_EVERYONE("Skip Everyone",30),
-	DRAW_ONE("Draw One",10),
-	DRAW_FIVE("Draw Five",20),
+	DRAW_ONE("Draw 1",10),
+	DRAW_FIVE("Draw 5",20),
 	WILD("Wild",40),
-	WILD_DRAW_TWO("Wild Draw Two",50),
+	WILD_DRAW_TWO("Wild Draw 2",50),
 	WILD_DRAW_COLOR("Wild Draw Color",60),
 	FLIP("Flip",20);
 	
