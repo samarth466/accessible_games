@@ -1,7 +1,7 @@
 package uno;
 
-import java.awt.Cursor;
 // Import Java modules
+import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyAdapter;

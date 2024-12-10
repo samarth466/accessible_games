@@ -1,6 +1,13 @@
 package uno;
 
 // Import Java modules
+import java.awt.Cursor;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.ImageIcon;
@@ -8,17 +15,13 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import java.awt.Image;
-import java.awt.Cursor;
-import java.awt.Graphics;
-
 // Class header
 public class Player extends Person {
 
     private static final int CARD_WIDTH = 100;
     private static final int CARD_HEIGHT = 145;
     private int initialCardX = 10;
-    private int initialCardY = 400;
+    private int initialCardY = 20;
     private ArrayList<ImageIcon> playerCards;
     private JTextArea output;
     private JTextField input;
@@ -29,6 +32,9 @@ public class Player extends Person {
         this.playerCards = new ArrayList<>();
         this.input = new JTextField();
         this.output = new JTextArea();
+        for (Card card: this.getHand()) {
+            this.listenForSelection(card);
+        }
     }
 
     private void displayText(String text) {
@@ -40,26 +46,48 @@ public class Player extends Person {
         input.setText("");
         return(text);
     }
+
+    private void listenForSelection(Card card) {
+        // Handle mouse interactions
+        card.addMouseListener(new MouseAdapter() {
+            
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                Player.this.selectCard(card);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                card.setCursor(Cursor.getDefaultCursor());
+            }
+
+        });
+
+        // Handle keyboard interactions
+        this.addKeyListener(new KeyAdapter() {
+            
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    if (card.getCursor() == Cursor.getDefaultCursor()) {
+                        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                        Player.this.selectCard(card);
+                    } else {
+                        card.setCursor(Cursor.getDefaultCursor());
+                    }
+                }
+            }
+
+        });
+    }
     
     public void printHand(Game game) {
         System.out.println("Printing hand...");
         for (int i = 0; i < super.getHand().getNumberOfCards(); i++) {
             Card card = super.getHand().getCard(i);
-            if (!playerCards.contains(card)) {
-                playerCards.add(new ImageIcon(card.getImage().getImage().getScaledInstance(this.CARD_WIDTH, this.CARD_HEIGHT, Image.SCALE_SMOOTH)));
-            }
-            ImageIcon image = playerCards.get(i);
-            JPanel innerPanel = new JPanel() {
-
-                @Override
-                public void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    g.drawImage(image.getImage(), 0, 0, this.getWidth(), this.getHeight(), this);
-                }
-
-            };
-            innerPanel.setBounds(this.initialCardX, this.initialCardY, this.CARD_WIDTH, this.CARD_HEIGHT);
-            game.add(innerPanel);
+            card.setBounds(this.initialCardX, this.initialCardY, this.CARD_WIDTH, this.CARD_HEIGHT);
+            game.add(card);
             initialCardX += 50;
             initialCardY -= 18;
         }
