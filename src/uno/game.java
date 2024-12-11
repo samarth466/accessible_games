@@ -113,7 +113,6 @@ public class Game extends JPanel {
                 checkedCard = true;
                 continue;
             }
-            currentColor = person.chooseCard(currentCard, deck, discardPile, currentColor, light, this);
             if (person instanceof Player) {
                 ((Player) person).printHand(this);
             }
