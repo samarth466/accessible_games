@@ -23,6 +23,7 @@ public class Card extends JPanel implements Comparable<Card> {
     private NumberOrAction cardValue;
     private CardType cardType;
     private ImageIcon image;
+    private Color wildColor;
     
     // Constructor
     public Card(Color c, NumberOrAction v) {
@@ -30,7 +31,7 @@ public class Card extends JPanel implements Comparable<Card> {
         this.cardValue = v;
         this.image = new ImageIcon(this.loadImage().getImage().getScaledInstance(100, 400, Image.SCALE_SMOOTH));
         this.assignCardType();
-        this.listenForSelection();
+        this.wildColor = Color.UNDEFINED;
     }
     
     // Constructor
@@ -39,7 +40,7 @@ public class Card extends JPanel implements Comparable<Card> {
         this.cardValue = v;
         this.cardType = t;
         this.image = new ImageIcon(this.loadImage().getImage().getScaledInstance(100, 400, Image.SCALE_SMOOTH));
-        this.listenForSelection();
+        this.wildColor = Color.UNDEFINED;
     }
     
     // Constructor
@@ -48,7 +49,7 @@ public class Card extends JPanel implements Comparable<Card> {
         this.cardValue = card.getCardValue();
         this.cardType = card.getCardType();
         this.image = new ImageIcon(this.loadImage().getImage().getScaledInstance(100, 400, Image.SCALE_SMOOTH));
-        this.listenForSelection();
+        this.wildColor = Color.UNDEFINED;
     }
 
     // Paints the component

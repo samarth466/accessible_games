@@ -1,16 +1,23 @@
 package game.chess;
 
+import java.awt.AWTEventMulticaster;
 // Import Java modules
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+
 import game.boardUtils.Square;
 import game.pieces.Bishop;
 import game.pieces.Empty;
@@ -36,8 +43,10 @@ public class Board extends JFrame {
     private LinkedHashMap<Color,LinkedHashMap<String,ArrayList<Piece>>> matterial;
     private LinkedHashMap<String,Square> squares;
     private LinkedHashMap<String, String> pieceIdentifiers = new LinkedHashMap<>(Map.of("b", "Bishop", "k", "King", "n", "Knight", "q", "Queen", "r", "Rook"));
+    private MoveEventListener moveEventListeners;
 
-    public Board(int windowWidth, int windowHeight, int squareWidth, int squareHeight, Player player1, Player player2) {
+    public Board(String title, int windowWidth, int windowHeight, int squareWidth, int squareHeight, Player player1, Player player2) {
+        super(title);
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
         this.squareWidth = squareWidth;
@@ -222,6 +231,25 @@ public class Board extends JFrame {
         this.squares.forEach((pos, square) -> square.setWindow(this));
     }
 
+    public synchronized void addMoveListener(MoveEventListener l) {
+        if (l == null) {
+            return;
+        }
+        moveEventListeners = AWTEventMulticaster.add(moveEventListeners, l);
+    }
+
+    public synchronized void removeMoveListener(MoveEventListener l) {
+        if (l == null) {
+            return;
+        }
+        moveEventListeners = AWTEventMulticaster.remove(moveEventListeners, l);
+    }
+
+    private synchronized void triggerMoveEvent(boolean isValidMove) {
+        MoveEvent event = new MoveEvent(this, isValidMove);
+        moveEventListeners.moveCompleted(event);
+    }
+
     private Color computeSquareColor(FileC f, RankC r) {
         int fileNumber = (((int) f.file())-((int) FileC.A.file()))+1;
         int rankNumber = r.rank();
@@ -232,7 +260,7 @@ public class Board extends JFrame {
         }
     }
 
-    public String move(String moveString, Player turn) {
+    public void move(String moveString, Player turn) {
         Color turnColor = turn.getColor();
         String firstLetter = null;
         String specifier = null;
@@ -257,14 +285,16 @@ public class Board extends JFrame {
             if (castled) {
                 FileC newKingFile = this.matterial.get(turnColor).get("King").get(0).getFile();
                 FileC newRookFile = this.matterial.get(turnColor).get("Rook").get(0).getFile();
-                Piece king = this.squares.get(oldKingFile.toString() + rank.toString()).setPiece(new Empty(null, null, null));
+                Piece king = this.squares.get(oldKingFile.toString() + rank.toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
                 Piece rook = this.squares.get(oldRookFile.toString() + rank.toString()).setPiece(new Empty(null, null, null));
                 this.squares.get(newKingFile.toString() + rank.toString()).setPiece(king);
                 this.squares.get(newRookFile.toString() + rank.toString()).setPiece(rook);
-                this.matterial.get(turnColor).get("Empty").addAll(Arrays.asList(new Empty(null, null, null), new Empty(null, null, null)));
-                return("");
+                this.squares.get(oldRookFile.toString() + rank.toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
+                this.triggerMoveEvent(true);
+                return;
             } else {
-                return("Invalid move");
+                this.triggerMoveEvent(false);
+                return;
             }
         } else if (moveString.contains("000") || moveString.toLowerCase().contains("ooo")) {
             FileC oldKingFile = this.matterial.get(turnColor).get("King").get(0).getFile();
@@ -276,11 +306,15 @@ public class Board extends JFrame {
                 FileC newRookFile = this.matterial.get(turnColor).get("Rook").get(1).getFile();
                 Piece king = this.squares.get(oldKingFile.toString() + rank.toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
                 Piece rook = this.squares.get(oldRookFile.toString() + rank.toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
+                this.squares.get(oldKingFile.toString() + rank.toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
                 this.squares.get(newKingFile.toString() + rank.toString()).setPiece(king);
                 this.squares.get(newRookFile.toString() + rank.toString()).setPiece(rook);
-                return("");
+                this.squares.get(oldRookFile.toString() + rank.toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
+                this.triggerMoveEvent(true);
+                return;
             } else {
-                return("Invalid move");
+                this.triggerMoveEvent(false);
+                return;
             }
         } else if (moveString.length() == 4) {
             firstLetter = String.valueOf(moveString.charAt(0));
@@ -295,30 +329,33 @@ public class Board extends JFrame {
             final char positionFirstLetter = position.charAt(0);
             if (position.equals(moveString) && Arrays.stream(this.possibleFiles).anyMatch(x -> x == positionFirstLetter)) {
                 for (Piece pawn: this.matterial.get(turnColor).get("Pawn")) {
-                    if (((Pawn) pawn).getPossiblePositions(pawn.getFile().toString() + pawn.getRank().toString(), this.squares.values()).contains(this.squares.get(position))) {
-                        if (pawn.validate(FileC.valueOf(String.valueOf(position.charAt(0))), RankC.valueOf(String.valueOf(position.charAt(1))), new ArrayList<>(this.squares.values()), king)) {
-                            if (promotionPiece == null) {
-                                this.squares.get(position).setPiece(pawn);
-                                this.squares.get(pawn.getFile().toString() + pawn.getRank().toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
-                                pawn.setFile(FileC.valueOf(String.valueOf(position.charAt(0))));
-                                pawn.setRank(RankC.valueOf(String.valueOf(position.charAt(1))));
-                                return("");
-                            } else if (this.pieceIdentifiers.containsKey(promotionPiece)) {
-                                Piece promotedPiece = ((Pawn) pawn).promotion(promotionPiece);
-                                this.squares.get(pawn.getFile().toString() + pawn.getRank().toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
-                                this.squares.get(position).setPiece(promotedPiece);
-                                this.matterial.get(turnColor).get("Pawn").remove(pawn);
-                                this.matterial.get(turnColor).get(this.pieceIdentifiers.get(promotionPiece)).add(promotedPiece);
-                                return("");
-                            } else {
-                                return("Invalid move");
-                            }
+                    if (pawn.validate(FileC.valueOf(String.valueOf(position.charAt(0))), RankC.valueOf(String.valueOf(position.charAt(1))), new ArrayList<>(this.squares.values()), king)) {
+                        if (promotionPiece == null) {
+                            this.squares.get(position).setPiece(pawn);
+                            this.squares.get(pawn.getFile().toString() + pawn.getRank().toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
+                            pawn.setFile(FileC.valueOf(String.valueOf(position.charAt(0))));
+                            pawn.setRank(RankC.valueOf(String.valueOf(position.charAt(1))));
+                            this.triggerMoveEvent(true);
+                            return;
+                        } else if (this.pieceIdentifiers.containsKey(promotionPiece)) {
+                            Piece promotedPiece = ((Pawn) pawn).promotion(promotionPiece);
+                            this.squares.get(pawn.getFile().toString() + pawn.getRank().toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
+                            this.squares.get(position).setPiece(promotedPiece);
+                            this.matterial.get(turnColor).get("Pawn").remove(pawn);
+                            this.matterial.get(turnColor).get(this.pieceIdentifiers.get(promotionPiece)).add(promotedPiece);
+                            this.triggerMoveEvent(true);
+                            return;
+                        } else {
+                            this.triggerMoveEvent(false);
+                            return;
                         }
                     }
                 }
-                return("Invalid move");
+                this.triggerMoveEvent(false);
+                return;
             } else {
-                return("Invalid move");
+                this.triggerMoveEvent(false);
+                return;
             }
         } else if (position != null && specifier != null && firstLetter == null) {
             int oldRank;
@@ -336,22 +373,27 @@ public class Board extends JFrame {
                             this.squares.get(piece.getFile().toString() + piece.getRank().toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
                             piece.setFile(FileC.valueOf(String.valueOf(position.charAt(0))));
                             piece.setRank(RankC.valueOf(String.valueOf(position.charAt(1))));
-                            return("");
+                            this.triggerMoveEvent(true);
+                            return;
                         } else if (this.pieceIdentifiers.containsKey(promotionPiece)) {
                             Piece promotedPiece = ((Pawn) piece).promotion(promotionPiece);
                             this.squares.get(piece.getFile().toString() + piece.getRank().toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
                             this.squares.get(position).setPiece(promotedPiece);
                             this.matterial.get(turnColor).get("Pawn").remove(piece);
                             this.matterial.get(turnColor).get(this.pieceIdentifiers.get(promotionPiece)).add(promotedPiece);
-                            return("");
+                            this.triggerMoveEvent(true);
+                            return;
                         } else {
-                            return("Invalid move");
+                            this.triggerMoveEvent(false);
+                            return;
                         }
                     } else {
-                        return("Invalid move");
+                        this.triggerMoveEvent(false);
+                        return;
                     }
                 } else {
-                    return("Invalid move");
+                    this.triggerMoveEvent(false);
+                    return;
                 }
             } else if (!this.squares.get(String.valueOf(position.charAt(0)) + Integer.toString(oldRank)).empty() && this.squares.get(String.valueOf(position.charAt(0)) + Integer.toString(oldRank)).getPieceColor() != turnColor) {
                 Piece piece = this.squares.get(String.valueOf(specifier.charAt(0)) + Integer.toString(oldRank)).getPiece();
@@ -363,15 +405,19 @@ public class Board extends JFrame {
                         this.squares.get(position).setPiece(piece);
                         piece.setFile(FileC.valueOf(String.valueOf(position.charAt(0))));
                         piece.setRank(RankC.valueOf(String.valueOf(position.charAt(1))));
-                        return("");
+                        this.triggerMoveEvent(true);
+                        return;
                     } else {
-                        return("Invalid move");
+                        this.triggerMoveEvent(false);
+                        return;
                     }
                 } else {
-                    return("Invalid move");
+                    this.triggerMoveEvent(false);
+                    return;
                 }
             } else {
-                return("Invalid move");
+                this.triggerMoveEvent(false);
+                return;
             }
         } else if (this.pieceIdentifiers.containsKey(firstLetter)) {
             for (Piece piece: this.matterial.get(turnColor).get(this.pieceIdentifiers.get(firstLetter))) {
@@ -385,13 +431,15 @@ public class Board extends JFrame {
                                     this.matterial.get(removedPiece.getColor()).get(removedPiece.getName()).remove(removedPiece);
                                 }
                                 this.squares.get(position).setPiece(piece);
-                                return("");
+                                this.triggerMoveEvent(true);
+                                return;
                             } else {
-                                return("Invalid move");
+                                this.triggerMoveEvent(false);
+                                return;
                             }
                         }
                     } else if (Character.isAlphabetic(specifier.charAt(0))) {
-                        if (piece.getRank().equals(RankC.valueOf(specifier))) {
+                        if (piece.getFile().equals(FileC.valueOf(specifier))) {
                             if (piece.validate(FileC.valueOf(String.valueOf(position.charAt(0))), RankC.valueOf(String.valueOf(position.charAt(1))), this.squares.values(), king)) {
                                 this.squares.get(piece.getFile().toString() + piece.getRank().toString()).setPiece(this.matterial.get(turnColor).get("Empty").get(0));
                                 if (!this.squares.get(position).empty()) {
@@ -399,13 +447,16 @@ public class Board extends JFrame {
                                     this.matterial.get(removedPiece.getColor()).get(removedPiece.getName()).remove(removedPiece);
                                 }
                                 this.squares.get(position).setPiece(piece);
-                                return("");
+                                this.triggerMoveEvent(true);
+                                return;
                             } else {
-                                return("Invalid move");
+                                this.triggerMoveEvent(false);
+                                return;
                             }
                         }
                     } else {
-                        return("Invalid move");
+                        this.triggerMoveEvent(false);
+                        return;
                     }
                 } else {
                     if (piece.validate(FileC.valueOf(String.valueOf(position.charAt(0))), RankC.valueOf(String.valueOf(position.charAt(1))), this.squares.values(), king)) {
@@ -415,15 +466,19 @@ public class Board extends JFrame {
                             this.matterial.get(removedPiece.getColor()).get(removedPiece.getName()).remove(removedPiece);
                         }
                         this.squares.get(position).setPiece(piece);
-                        return("");
+                        this.triggerMoveEvent(true);
+                        return;
                     } else {
-                        return("Invalid move");
+                        this.triggerMoveEvent(false);
+                        return;
                     }
                 }
             }
-            return("Invalid move");
+            this.triggerMoveEvent(false);
+            return;
         } else {
-            return("Invalid move");
+            this.triggerMoveEvent(false);
+            return;
         }
     }
 
@@ -461,5 +516,41 @@ public class Board extends JFrame {
         this.turnIndex++;
         return(currentPlayer);
     }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Chess");
+        JLabel label = new JLabel("Enter your name: ");
+        JTextField nameField = new JTextField(20);
+        frame.setLayout(new BorderLayout());
+        JPanel panel = new JPanel();
+        panel.add(label);
+        panel.add(nameField);
+        frame.add(panel, BorderLayout.CENTER);
+        nameField.addKeyListener(new KeyAdapter() {
+            
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String name = nameField.getText().trim();
+                    if (!name.isEmpty()) {
+                        frame.dispose();
+                        Board board = new Board("Chess", 800, 800, 100, 100, new Player(name, Color.WHITE), new Player(name, Color.BLACK));
+                        startGame(board);
+                        board.setSize(800, 800);
+                        board.setLocationRelativeTo(null);
+                        board.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                        board.setFocusable(true);
+                        board.setVisible(true);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "Name cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+
+        });
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    private static void startGame(Board board) {}
 
 }
