@@ -1,8 +1,8 @@
 package uno;
 
-import unoGameProject.Audio;
+import uno.Audio;
 
-public enum SoundEffect {
+public class SoundEffect {
 
     private final Audio audio;
 
@@ -13,7 +13,7 @@ public enum SoundEffect {
     }
 
     public Audio audio() {
-        return(audio)
+        return(audio);
     }
 
 }

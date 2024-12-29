@@ -32,7 +32,7 @@ public class Player extends Person {
         this.playerCards = new ArrayList<>();
         this.input = new JTextField();
         this.output = new JTextArea();
-        for (Card card: this.getHand()) {
+        for (Card card: this.getHand().getHand()) {
             this.listenForSelection(card);
         }
     }
@@ -45,6 +45,10 @@ public class Player extends Person {
         String text = input.getText();
         input.setText("");
         return(text);
+    }
+
+    private void selectCard(Card card) {
+        // UNIMPLEMENTED
     }
 
     private void listenForSelection(Card card) {
@@ -65,7 +69,7 @@ public class Player extends Person {
         });
 
         // Handle keyboard interactions
-        this.addKeyListener(new KeyAdapter() {
+        card.addKeyListener(new KeyAdapter() {
             
             @Override
             public void keyPressed(KeyEvent e) {
