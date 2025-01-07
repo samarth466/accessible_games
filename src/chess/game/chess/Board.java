@@ -4,6 +4,7 @@ import java.awt.AWTEventMulticaster;
 // Import Java modules
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -235,14 +236,14 @@ public class Board extends JFrame {
         if (l == null) {
             return;
         }
-        moveEventListeners = AWTEventMulticaster.add(moveEventListeners, l);
+        moveEventListeners = MoveEventMulticaster.add(moveEventListeners, l);
     }
 
     public synchronized void removeMoveListener(MoveEventListener l) {
         if (l == null) {
             return;
         }
-        moveEventListeners = AWTEventMulticaster.remove(moveEventListeners, l);
+        moveEventListeners = MoveEventMulticaster.remove(moveEventListeners, l);
     }
 
     private synchronized void triggerMoveEvent(boolean isValidMove) {
@@ -511,9 +512,17 @@ public class Board extends JFrame {
         return(null);
     }
 
+    public void prevTurn() {
+        this.turnIndex = ((this.turnIndex-1)%2+2)%2;
+    }
+
+    public void nextTurn() {
+        this.turnIndex = (this.turnIndex+1)%2;
+    }
+
     public Player getCurrentPlayer() {
         Player currentPlayer = this.players.get(this.turnIndex);
-        this.turnIndex++;
+        this.nextTurn();
         return(currentPlayer);
     }
 
@@ -535,7 +544,7 @@ public class Board extends JFrame {
                     if (!name.isEmpty()) {
                         frame.dispose();
                         Board board = new Board("Chess", 800, 800, 100, 100, new Player(name, Color.WHITE), new Player(name, Color.BLACK));
-                        startGame(board);
+                        run(board);
                         board.setSize(800, 800);
                         board.setLocationRelativeTo(null);
                         board.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -551,6 +560,66 @@ public class Board extends JFrame {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    private static void startGame(Board board) {}
+    private static void run(Board board) {
+        Player currentPlayer = board.getCurrentPlayer();
+        JPanel inputPane;
+        board.addKeyListener(new KeyAdapter() {
+            
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_T) {
+                    toggleInputPane(inputPane);
+                }
+            }
+
+        });
+        inputPane = createInputPane();
+        board.setGlassPane(inputPane);
+        TurnManager turnManager = new TurnManager(board);
+        board.addMoveListener(turnManager);
+    }
+
+    private static void toggleInputPane(JPanel inputPane) {
+        boolean isVisible = inputPane.isVisible();
+        inputPane.setVisible(!isVisible);
+        if (!isVisible) {
+            inputPane.requestFocusInWindow();
+        }
+    }
+
+    private static JPanel createInputPane() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(0, 0, 0, 150));
+        panel.setVisible(false);
+
+        JPanel inputPanel;
+
+        JTextField moveField = new JTextField();
+        moveField.addKeyListener(new KeyAdapter() {
+            
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String moveInput = moveField.getText();
+                    moveField.setText("");
+                    if (2 <= moveInput.length() && moveInput.length() <= 4) {
+                        toggleInputPane(inputPanel);
+                        board.move(moveInput);
+                    } else {
+                        JOptionPane.showMessageDialog(inputPanel, "The move must be 2-4 characters long!", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+
+        });
+
+        inputPanel = new JPanel(new FlowLayout());
+        inputPanel.add(new JLabel("Enter a move: "));
+        inputPanel.add(moveField);
+
+        panel.add(inputPanel, BorderLayout.CENTER);
+
+        return(panel);
+    }
 
 }
