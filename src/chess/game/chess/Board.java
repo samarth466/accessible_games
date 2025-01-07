@@ -562,9 +562,10 @@ public class Board extends JFrame {
 
     private static void run(Board board) {
         Player currentPlayer = board.getCurrentPlayer();
-        JPanel inputPane;
+        final JPanel inputPane = createInputPane(board, currentPlayer);
+        board.setGlassPane(inputPane);
         board.addKeyListener(new KeyAdapter() {
-            
+
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_T) {
@@ -573,8 +574,6 @@ public class Board extends JFrame {
             }
 
         });
-        inputPane = createInputPane();
-        board.setGlassPane(inputPane);
         TurnManager turnManager = new TurnManager(board);
         board.addMoveListener(turnManager);
     }
@@ -587,7 +586,7 @@ public class Board extends JFrame {
         }
     }
 
-    private static JPanel createInputPane() {
+    private static JPanel createInputPane(Board board, Player currentPlayer) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(0, 0, 0, 150));
         panel.setVisible(false);
@@ -603,10 +602,10 @@ public class Board extends JFrame {
                     String moveInput = moveField.getText();
                     moveField.setText("");
                     if (2 <= moveInput.length() && moveInput.length() <= 4) {
-                        toggleInputPane(inputPanel);
-                        board.move(moveInput);
+                        toggleInputPane(panel);
+                        board.move(moveInput, currentPlayer);
                     } else {
-                        JOptionPane.showMessageDialog(inputPanel, "The move must be 2-4 characters long!", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(panel, "The move must be 2-4 characters long!", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
